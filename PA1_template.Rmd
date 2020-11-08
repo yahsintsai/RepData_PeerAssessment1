@@ -1,25 +1,76 @@
 ---
 title: "Reproducible Research: Peer Assessment 1"
-output: 
-  html_document:
-    keep_md: true
 ---
 
 
 ## Loading and preprocessing the data
+```{r, echo=TRUE}
+setwd("/Users/yahsintsai/Downloads")
+dt <- read.csv("activity.csv", sep = ",", header = T)
+head(dt)
+```
 
 
 
 ## What is mean total number of steps taken per day?
+```{r, echo=TRUE}
+dt$date <- as.Date(dt$date, "%Y-%m-%d")
+dt.new <- dt[complete.cases(dt$steps), ]
+
+total <- aggregate(dt.new$steps, list(dt.new$date), sum)
+hist(total$x, xlab = "date", ylab = "steps", main = "total number of steps taken per day")
+
+means <- aggregate(dt.new$steps, list(dt.new$date), mean)
+means
+
+medians <- aggregate(dt.new$steps, list(dt.new$date), median)
+medians
+```
 
 
 
 ## What is the average daily activity pattern?
+```{r, echo=TRUE}
+dt.by.interval <- aggregate(dt.new$steps, list(dt.new$interval), mean)
+plot(dt.by.interval, type = "l", xlab = "5-minute interval", ylab = "average number of steps taken across all day")
+
+dt.by.interval[max(dt.by.interval$x), ]$Group.1
+```
 
 
 
 ## Imputing missing values
+```{r}
+sum(is.na(dt$steps)) # == sum(is.na(dt))
+
+dt.fill <- dt
+dt.fill$steps[is.na(dt.fill$steps)] <- mean(dt.fill$steps, na.rm = T)
+
+total.fill <- aggregate(dt.fill$steps, list(dt.fill$date), sum)
+hist(total.fill$x, xlab = "date", ylab = "steps", main = "total number of steps taken per day")
+
+means.fill <- aggregate(dt.fill$steps, list(dt.fill$date), mean)
+means.fill
+
+medians.fill <- aggregate(dt.fill$steps, list(dt.fill$date), median)
+medians.fill
+
+```
 
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+dt.new$wday <- factor(is.weekend(dt.new$date), labels = c("weekday", "weekend"))
+
+dt.wdays <- dt.new[dt.new["wday"]=="weekday", ]
+dt.wends <- dt.new[dt.new["wday"]=="weekend", ]
+
+dt.by.interval.wday <- aggregate(dt.wdays$steps, list(dt.wdays$interval), mean)
+dt.by.interval.wend <- aggregate(dt.wends$steps, list(dt.wends$interval), mean)
+
+par(mfrow=c(2,1))
+plot(dt.by.interval.wday, type = "l", xlab = "5-minute interval", ylab = "average number of steps taken across all weekdays", main = "weekdays")
+plot(dt.by.interval.wend, type = "l", xlab = "5-minute interval", ylab = "average number of steps taken across all weekends", main = "weekends")
+```
+
